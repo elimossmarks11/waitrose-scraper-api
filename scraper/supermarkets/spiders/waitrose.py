@@ -58,5 +58,6 @@ class WaitroseSpider(scrapy.Spider):
                 "sub_category": categories[2].get("name") if len(categories) > 2 else None,
                 "sub_2_category": categories[3].get("name") if len(categories) > 3 else None,
                 "sub_3_category": categories[4].get("name") if len(categories) > 4 else None,
-                "pricing": pricing.get("displayPrice"),
+                # returns the float format 
+                "pricing": float(pricing.get("displayPrice", "").replace("£", "")) if pricing.get("displayPrice") else None,
             }

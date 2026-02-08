@@ -6,6 +6,7 @@
 #     https://docs.scrapy.org/en/latest/topics/settings.html
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
+from pathlib import Path
 
 BOT_NAME = "supermarkets"
 
@@ -24,7 +25,7 @@ ITEM_PIPELINES = {
     "supermarkets.pipelines.DuplicatePipeline": 300,
 }
 LOG_LEVEL = "INFO"
-LOG_FILE = "scrapy.log"
+# LOG_FILE = "scrapy.log"
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
@@ -100,4 +101,18 @@ FEED_EXPORT_ENCODING = "utf-8"
 
 DOWNLOADER_MIDDLEWARES = {
     'supermarkets.middlewares.SeleniumMiddleware': 500,
+}
+
+# Configure the output path relative to the project structure
+# This ensures products.json is saved in ../../data/scraped/ regardless of where the command is run
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+OUTPUT_PATH = PROJECT_ROOT / "data" / "scraped" / "products.json"
+
+FEEDS = {
+    str(OUTPUT_PATH): {
+        "format": "json",
+        "encoding": "utf-8",
+        "indent": 4,
+        "overwrite": True,
+    }
 }
