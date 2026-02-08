@@ -52,7 +52,7 @@ class SeleniumMiddleware:
             while True:
                 try:
                     element = WebDriverWait(self.driver, 3).until(
-                        EC.presence_of_element_located((By.CSS_SELECTOR, "button[data-testid='reject-all']"))
+                        EC.element_to_be_clickable((By.CSS_SELECTOR, "button[data-testid='reject-all']"))
                     )
                     element.click()
                     logging.info("Cookie banner closed")
