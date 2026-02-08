@@ -8,6 +8,10 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 import logging
 
+# chromium issue on nuvolos: solves it 
+import shutil
+from selenium.webdriver.chrome.service import Service
+
 # Add logging configuration
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -31,12 +35,19 @@ class SeleniumMiddleware:
     def spider_opened(self, spider):
         """Create the browser when the spider starts."""
         options = Options()
-        # options.add_argument("--headless") # Uncomment this line to use headless mode if you think your website allows it
+        # options.add_argument("--headless")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
-        # sets the user agent for selenium 
         options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0")
-        self.driver = webdriver.Chrome(options=options)
+
+        chromium_path = shutil.which("chromium") or shutil.which("google-chrome")
+        if chromium_path:
+            options.binary_location = chromium_path
+
+        chromedriver_path = shutil.which("chromedriver")
+        service = Service(chromedriver_path) if chromedriver_path else Service()
+
+        self.driver = webdriver.Chrome(service=service, options=options)
 
     def spider_closed(self, spider):
         """Close the browser when the spider finishes."""
