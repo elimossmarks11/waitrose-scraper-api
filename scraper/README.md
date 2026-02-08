@@ -1,33 +1,31 @@
 # Scraper 
 
-The scraper scrapes the Waitrose e-commerce website to fetch various information about each food product. The single most important information it returns is a barcode of each product as it is used in the openfoodfacts API to match products. Other inforamtion (i.e. categories) are fetched in case a recommendation system will be implemented in the API part. 
+Fetches product data from Waitrose for integration with the OpenFoodFacts API, prioritizing barcodes for product matching. Secondary metadata (e.g., categories) supports potential recommendation systems.
 
-## Strtucture 
-Simplified structure of the project is illustrated as follows: 
+## Structure 
+In this code, Selenium handles page fetching as requests cannot obtain HTML from the Waitrose website. Therefore, Selenium fetches the web pages and hands them to request to parse the content to return the data.
+
 ```
-fetch a category page with selenium (middlewares.py) -> fetch each prodcut's url (waitrose.py) -> fetch each product page (middlewears.py) -> parse each product's name, price and barocdes (waitrose.py) -> remove duplicates (pipeline.py) -> output
+Selenium Middleware (Category Page) -> Spider (Product URLs) -> Selenium Middleware (Product Page) -> Spider (JSON Parsing) -> Pipeline (Deduplication) -> Output
 ```
-This process is repeated for each category. For this project, we only use the "Frozen" category due to time constraints. 
+Currently restricted to the "Frozen" category.
 
-?Gemini explain the key strucutre that selenium fetches pages for scrapy. Explain concisely. 
+## Fetching Pages
 
-## Fetching pages
+`SeleniumMiddleware` handle the dynamic parts of the website that regular Scrapy cannot handle.
 
-### Rejecting cookie banners
-The code below rejects requests for cookies to proceed to next steps. 
+### Rejecting Cookie Banners
+The scraper clicks "Reject All" on the cookie banner so we can see the page content. It waits for the button to appear before clicking.
 
-?Gemini explain in one line what requests.meta.get("load_more" ...) does
+```py
+# scraper/supermarkets/middlewares.py
 
-In the code below, EC.element_to_be_clickable detects the button to rejrect cookies, and clicks on the reject button. The program waits for 3 seconds for the button to appear. If it doesn't it proceeds to the next step. 
-
-?Gemini expalin in one line why logging is used.
-```{python}
-        # handle the cookie barner if it exists
+# handle the cookie banner if it exists
 if request.meta.get("load_more", False):
     while True:
         try:
             element = WebDriverWait(self.driver, 3).until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, "button[data-testid="reject-all"])
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "button[data-testid='reject-all']"))
             )
             element.click()
             logging.info("Cookie banner closed")
@@ -37,15 +35,17 @@ if request.meta.get("load_more", False):
             break
 ```
 
-### 
-```
+### Infinite Scroll Handling 
+To get all products, the code keeps clicking the "Load More" button until it disappears. This ensures we load everything on the page.
+
+```py
+# scraper/supermarkets/middlewares.py
+
         # if the meta information from callback contains "load_more" set to True, we will click on the Load more... buttons
         if request.meta.get("load_more", False):
             while True:
                 try:
                     # Wait until the 'Load More' button is clickable
-                    # https://selenium-python.readthedocs.io/waits.html
-
                     element = WebDriverWait(self.driver, 5).until(
                         EC.element_to_be_clickable((By.CSS_SELECTOR, "button[data-shortdescription='Load more products']"))
                     )
@@ -57,38 +57,76 @@ if request.meta.get("load_more", False):
                 except Exception as e:
                     logging.info("No more 'Load More' button found or an error occurred: %s", e)
                     break
-
-        body = self.driver.page_source
-
-        return HtmlResponse(
-            url=request.url,
-            body=body,
-            encoding='utf-8',
-            request=request
-        )
 ```
-
-
 
 ## Parsing
-Waitrose.py
 
-?Gemini explain the class structure of waitrose.py concisely
+`WaitroseSpider` manages the crawling lifecycle, from starting the requests to extracting the final data.
 
+### Request Generation
+The `start_requests` function kicks off the process for the categories we want, and tells the middleware to handle the "Load More" clicking. In this code, we only scrape the frozen category, but more can be added. 
 
-The following function starts request for 
-```
+```py
+# scraper/supermarkets/spiders/waitrose.py
+
 def start_requests(self):
     categories = [
         "https://www.waitrose.com/ecom/shop/browse/groceries/frozen"
     ]
-    self.category_bar = tqdm(total=len(categories), desc="Categories")
-    self.product_bar = None
-    self.product_count = 0
+    # ... progress bar initialization ...
 
     for category_url in categories:
     yield scrapy.Request(
         url=category_url, 
         meta={"load_more": True}
     )
+```
+
+### Data Extraction
+Instead of reading the unorganised HTML, the spider grabs the clean data directly from a hidden JSON script on the page (`__NEXT_DATA__`). This is much more reliable and less likely to break if the website design changes.
+
+```py
+# scraper/supermarkets/spiders/waitrose.py
+
+def parse_product(self, response):
+    # ...
+    json_text = response.css("script#__NEXT_DATA__::text").get()
+    
+    if json_text:
+        data = json.loads(json_text)
+        product = data.get('props', {}).get('pageProps', {}).get('product', {})
+        # ... field extraction ...
+        
+        yield {
+            "name": product.get("name"),
+            "barcode": product.get("barCodes") or [],
+            # ...
+        }
+```
+
+## Pipeline
+
+We check for duplicates. If a product appears more than once, we combine their barcodes so we don't lose any information. This ensures every item in our dataset is unique and complete.
+
+```py
+# scraper/supermarkets/pipelines.py
+
+def process_item(self, item, spider):
+    name = item.get('name')
+    new_barcodes = item.get('barcode')
+
+    # Check if the product name has been seen before
+    if name in self.seen_items:
+        existing_item = self.seen_items[name]
+        existing_barcodes = existing_item.get('barcode')
+
+        # Add new barcodes to the original item's barcode list
+        for barcode in new_barcodes:
+            if barcode not in existing_barcodes:
+                existing_barcodes.append(barcode)
+
+        raise DropItem(f"Duplicate item found: {item}")
+    
+    self.seen_items[name] = item
+    return item
 ```
