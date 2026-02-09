@@ -2,13 +2,26 @@
 
 Fetches product data from Waitrose for integration with the OpenFoodFacts API, prioritizing barcodes for product matching. Secondary metadata (e.g., categories) supports potential recommendation systems.
 
+## Usage
+To scrape data, execute the following command in the following command inside the 'scraper' directory after enabling the virtual environment:
+```
+scrapy crawl waitrose
+```
+
+Running this script will output scraped data in JSON format to the `./data/scraped` folder. The returned data includes barcodes, price, and product categories for each item. These data are collected so that the next person can build a recommendation system to suggest healthy alternatives in the API part.
+
+Two things to note:
+
+1) A single product may have multiple barcodes. If two products share the same name but differ in weight, the script automatically aggregates their barcodes under one entry and removes the duplicate. This is intentional so that the API can match products using any of their associated barcodes. However, not all barcodes have corresponding entries in the OpenFoodFacts API. The next person should be aware of this limitation.
+2) The returned data includes a main category along with three sub-categories. These are hierarchical (main → sub1 → sub2 → sub3), with each level more specific than the last.
+
 ## Structure 
 In this code, Selenium handles page fetching as requests cannot obtain HTML from the Waitrose website. Therefore, Selenium fetches the web pages and hands them to request to parse the content to return the data.
 
 ```
 Selenium Middleware (Category Page) -> Spider (Product URLs) -> Selenium Middleware (Product Page) -> Spider (JSON Parsing) -> Pipeline (Deduplication) -> Output
 ```
-Currently restricted to the "Frozen" category.
+The code currently restricts its attention to the "Frozen" category due to increased wait time for scrapying when the number of categories is increased. 
 
 ## Fetching Pages
 
@@ -103,6 +116,8 @@ def parse_product(self, response):
             # ...
         }
 ```
+
+By capturing product categories and prices, the system provides the necessary features for the API's recommendation logic to identify and suggest healthier substitutes.
 
 ## Pipeline
 

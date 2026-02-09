@@ -82,7 +82,11 @@ class SeleniumMiddleware:
                     element = WebDriverWait(self.driver, 5).until(
                         EC.element_to_be_clickable((By.CSS_SELECTOR, "button[data-shortdescription='Load more products']"))
                     )
-                    element.click()
+
+                    # Scroll to the button and click it using JavaScript to ensure it works even if the button is not fully in view
+                    # arguments[0] refers to the element we want to interact with, and block: 'center' scrolls it to the center of the view
+                    self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+                    self.driver.execute_script("arguments[0].click();", element)
                     logging.info("Clicked 'Load More' button.")
                     # wait a bit for the new products to load
                     time.sleep(1)

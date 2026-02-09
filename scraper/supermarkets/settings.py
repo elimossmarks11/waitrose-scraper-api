@@ -105,14 +105,14 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Configure the output path relative to the project structure
 # This ensures products.json is saved in ../../data/scraped/ regardless of where the command is run
-# PROJECT_ROOT = Path(__file__).resolve().parents[3]
-# OUTPUT_PATH = PROJECT_ROOT / "data" / "scraped" / "products.json"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+OUTPUT_PATH = PROJECT_ROOT / "data" / "scraped" / "products.json"
 
-# FEEDS = {
-#     str(OUTPUT_PATH): {
-#         "format": "json",
-#         "encoding": "utf-8",
-#         "indent": 4,
-#         "overwrite": True,
-#     }
-# }
+FEEDS = {
+    str(OUTPUT_PATH): {
+        "format": "json",
+        "encoding": "utf-8",
+        "indent": 4,
+        "overwrite": True,
+    }
+}
