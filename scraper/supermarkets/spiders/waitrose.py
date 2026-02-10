@@ -54,10 +54,12 @@ class WaitroseSpider(scrapy.Spider):
             yield {
                 "name": product.get("name"),
                 "barcode": product.get("barCodes") or [],
-                "main_category": categories[1].get("name") if len(categories) > 1 else None,
-                "sub_category": categories[2].get("name") if len(categories) > 2 else None,
-                "sub_2_category": categories[3].get("name") if len(categories) > 3 else None,
-                "sub_3_category": categories[4].get("name") if len(categories) > 4 else None,
+                # "main_category": categories[1].get("name") if len(categories) > 1 else None,
+                # "sub_category": categories[2].get("name") if len(categories) > 2 else None,
+                # "sub_2_category": categories[3].get("name") if len(categories) > 3 else None,
+                # "sub_3_category": categories[4].get("name") if len(categories) > 4 else None,
+                "url": response.url,
+                "food_type": categories,
                 # returns the float format 
                 "pricing": float(pricing.get("displayPrice", "").replace("£", "")) if pricing.get("displayPrice") else None,
             }
