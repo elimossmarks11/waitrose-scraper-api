@@ -113,6 +113,10 @@ FEEDS = {
         "format": "jsonl",
         "encoding": "utf-8",
         "indent": None,
-        "overwrite": True,
+        # Do not overwrite the file on each run; append instead so interrupted
+        # runs don't truncate previously-scraped data.
+        "overwrite": False,
+        # Do not store empty feeds (prevents creating an empty file when no items were scraped)
+        "store_empty": False,
     }
 }
