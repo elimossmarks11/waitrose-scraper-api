@@ -26,3 +26,6 @@ dependencies:
   # Testing (Both)
   - pytest
   - tqdm
+
+  # Pipeline orchestration
+  - click

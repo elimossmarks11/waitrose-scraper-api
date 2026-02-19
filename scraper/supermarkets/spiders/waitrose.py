@@ -3,6 +3,7 @@ import scrapy
 import logging
 from pathlib import Path
 from tqdm import tqdm
+from w3lib.html import remove_tags
 
 
 class WaitroseSpider(scrapy.Spider):
@@ -23,27 +24,31 @@ class WaitroseSpider(scrapy.Spider):
         self.product_count = 0
 
         # Load already-scraped product URLs so we don't re-scrape them
+        # If the `FORCE_RESCRAPE` setting is True, skip loading to force full re-scrape
         self.scraped_urls = set()
         try:
-            output_path = self.settings.get('OUTPUT_PATH')
-            path = Path(output_path) if output_path else None
-            # fallback: look for data/scraped/products.jsonl relative to project root
-            if not path or not path.exists():
-                path = Path(__file__).resolve().parents[4] / 'data' / 'scraped' / 'products.jsonl'
-
-            if path.exists():
-                logging.info(f"Loading already-scraped URLs from {path}")
-                with path.open('r', encoding='utf-8') as fh:
-                    for line in fh:
-                        try:
-                            obj = json.loads(line)
-                            url = obj.get('url')
-                            if url:
-                                self.scraped_urls.add(url)
-                        except Exception:
-                            continue
+            if self.settings.get('FORCE_RESCRAPE', False):
+                logging.info("FORCE_RESCRAPE enabled: skipping load of existing scraped URLs")
             else:
-                logging.info("No existing products.jsonl found; full scrape will run")
+                output_path = self.settings.get('OUTPUT_PATH')
+                path = Path(output_path) if output_path else None
+                # fallback: look for data/scraped/products.jsonl relative to project root
+                if not path or not path.exists():
+                    path = Path(__file__).resolve().parents[4] / 'data' / 'scraped' / 'products.jsonl'
+
+                if path.exists():
+                    logging.info(f"Loading already-scraped URLs from {path}")
+                    with path.open('r', encoding='utf-8') as fh:
+                        for line in fh:
+                            try:
+                                obj = json.loads(line)
+                                url = obj.get('url')
+                                if url:
+                                    self.scraped_urls.add(url)
+                            except Exception:
+                                continue
+                else:
+                    logging.info("No existing products.jsonl found; full scrape will run")
         except Exception as e:
             logging.info(f"Error loading existing scraped URLs: {e}")
 
