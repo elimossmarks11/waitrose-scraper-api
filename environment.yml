@@ -29,3 +29,6 @@ dependencies:
 
   # Pipeline orchestration
   - click
+
+  # Excel Loading
+  - openpyxl
