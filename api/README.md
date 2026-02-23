@@ -2,10 +2,19 @@
 
 ## Data Enrichment Process
 
-My enrichment pipeline uses three ways of categorizing food as UPF: 
+### Classification Methodology
 
-1. NOVA classifications from Open Food Facts
-2. Cross-referencing against a MUP table provided by a study (Neumann, Eichner, Fasshauer, 2023).
-3. 
+Products are classified using a multi-step fallback system:
 
-According to [UK Law](https://www.gov.uk/food-labelling-and-packaging/ingredients-list), if a food or drink product has 2 or more ingredients, all ingredients must be listed. As such, for 
+| `nova_group` | `nova_source` | Explanation |
+|---|---|---|
+| 1, 2, 3, or 4 | `OpenFoodFacts` | NOVA group provided directly by OpenFoodFacts via barcode match. |
+| 4 | `MUP_present: {ingredient}` | At least one marker of ultra-processing (MUP) found in ingredients, following Neumann et al.'s approach of using one MUP as evidence of UPF. |
+| Not confirmed UPF | `No ingredients present` | Product has no ingredients listed. [UK law](https://www.gov.uk/food-labelling-and-packaging/ingredients-list) only requires ingredients lists for products with two or more ingredients, so these are likely unprocessed foods. Classified conservatively to account for possible inconsistencies in Waitrose product data. |
+| Confirmed not UPF | `No OFF classification, no MUP present` | Product has ingredients but no MUP markers were found and OFF had no classification. |
+
+### Limitations
+
+- MUP substring matching may produce false positives where marker terms appear within longer ingredient names. 
+- MUP prefix matches are approximate. These account for only 4 of 109 MUP entries.
+- MUP markers are sourced from [Neumann et al. (2023)](https://pmc.ncbi.nlm.nih.gov/articles/PMC10755427/).
