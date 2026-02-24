@@ -93,6 +93,9 @@ def enrich_open_food_facts(only_new: bool):
         return re.sub(r'[^a-zA-Z0-9\s]', '', text.lower())
 
     off_enriched_count = 0
+    NOT_UPF_CATEGORY_IDS = {
+    '301142', '303349', '300645', '301139', '301135', '301138', '301137', '301136', '301141', '303348', '303357'
+    }
     with open(enriched_file, 'a') as out:
         for product in scraped:
             barcodes = product.get('barcode', [])
@@ -130,8 +133,20 @@ def enrich_open_food_facts(only_new: bool):
             if nova_group is None:
                 ingredients = product.get('ingredients', None)
                 if not ingredients or not isinstance(ingredients, str):
-                    nova_group = 'Not confirmed UPF'
-                    nova_source = 'No ingredients present'
+                    # Check if category suggests non-UPF
+                    food_type = product.get('food_type') or []
+                    category_match = None
+                    for cat in food_type:
+                        if cat['id'] in NOT_UPF_CATEGORY_IDS:
+                            category_match = cat['name']
+                            break
+
+                    if category_match:
+                        nova_group = 'Not UPF'
+                        nova_source = f'Category inference: {category_match}'
+                    else: 
+                        nova_group = 'Not confirmed UPF'
+                        nova_source = 'No ingredients present'
 
                 else:
                     normalised = normalize(ingredients)
@@ -161,7 +176,7 @@ def enrich_open_food_facts(only_new: bool):
     click.echo(f'Enriched {off_enriched_count} new products with OpenFoodFacts NOVA scores')
 
 @cli.command()
-@click.option("--db-path", default=str(DATA_DIR / 'products.db'), show_default=True, help='Output SQLite database path')
+@click.option("--db-path", default=str(ENRICHED_DIR / 'products.db'), show_default=True, help='Output SQLite database path')
 def build_db(db_path: str):
     """Build a flat SQLite table from enriched product data. Re-runs append new products and skip duplicates."""
 
