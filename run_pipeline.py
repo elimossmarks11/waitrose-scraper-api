@@ -162,7 +162,7 @@ def enrich_open_food_facts(only_new: bool):
                         nova_source = f'MUP Present: {", ".join(matched_mups)}'
 
             if nova_group is None:
-                nova_group = 'Confirmed not UPF'
+                nova_group = 'Not UPF'
                 nova_source = 'No OFF classification, no MUP present'
 
             product['nova_group'] = nova_group
