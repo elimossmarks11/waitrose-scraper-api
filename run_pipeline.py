@@ -36,8 +36,8 @@ def enrich_open_food_facts(only_new: bool):
 
     ENRICHED_DIR.mkdir(parents=True, exist_ok=True)
 
-    scraped_file = SCRAPED_DIR / 'test_products.jsonl'
-    enriched_file = ENRICHED_DIR / 'test_products.jsonl'
+    scraped_file = SCRAPED_DIR / 'products.jsonl'
+    enriched_file = ENRICHED_DIR / 'products.jsonl'
 
     scraped = pd.read_json(scraped_file, lines=True).to_dict(orient='records')
     click.echo(f'Loaded {len(scraped)} scraped products')
@@ -109,11 +109,13 @@ def enrich_open_food_facts(only_new: bool):
                     params = {'fields': 'nova_group,product_name'},
                     headers = {'User-Agent': 'DS205-LSE/1.0'}
                 )
-                    time.sleep(2)
 
                 except requests.exceptions.ConnectionError:
                     click.echo(f'Connection error for barcode {bc}, skipping')
                     continue
+
+                finally:
+                    time.sleep(2)
 
                 if resp.status_code == 200:
                     off_data = resp.json().get('product', {})
