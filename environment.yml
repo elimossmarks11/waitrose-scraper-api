@@ -22,13 +22,14 @@ dependencies:
   - pydantic
   - uvicorn
   - httpx
+  - sqlmodel
   
   # Testing (Both)
   - pytest
   - tqdm
 
-  # Pipeline orchestration
+  # Pipeline orchestration (Part B: Data Enrichment and API)
   - click
 
-  # Excel Loading
+  # Excel Loading (Part B)
   - openpyxl
