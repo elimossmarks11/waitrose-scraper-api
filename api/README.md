@@ -2,19 +2,47 @@
 
 ## Data Enrichment Process
 
-### Classification Methodology
+## Classification Methodology
 
-Products are classified using a multi-step fallback system:
+Products are classified using a multi-step fallback system. 6,490 products were classified in total.
 
-| `nova_group` | `nova_source` | Explanation |
-|---|---|---|
-| 1, 2, 3, or 4 | `OpenFoodFacts` | NOVA group provided directly by OpenFoodFacts via barcode match. |
-| 4 | `MUP_present: {ingredient}` | At least one marker of ultra-processing (MUP) found in ingredients, following Neumann et al.'s approach of using one MUP as evidence of UPF. |
-| Not confirmed UPF | `No ingredients present` | Product has no ingredients listed. [UK law](https://www.gov.uk/food-labelling-and-packaging/ingredients-list) only requires ingredients lists for products with two or more ingredients, so these are likely unprocessed foods. Classified conservatively to account for possible inconsistencies in Waitrose product data. |
-| Confirmed not UPF | `No OFF classification, no MUP present` | Product has ingredients but no MUP markers were found and OFF had no classification. |
+| `nova_group` | `nova_source` | Count | Explanation |
+|---|---|---|---|
+| 1 | `OpenFoodFacts` | 215 | NOVA 1 from OFF barcode match. |
+| 2 | `OpenFoodFacts` | 65 | NOVA 2 from OFF barcode match. |
+| 3 | `OpenFoodFacts` | 550 | NOVA 3 from OFF barcode match. |
+| 4 | `OpenFoodFacts` | 1,031 | NOVA 4 from OFF barcode match. |
+| 4 | `MUP Present: {markers}` | 2,099 | At least one marker of ultra-processing (MUP) found in ingredients, following Neumann et al.'s approach of using one MUP as evidence of UPF. |
+| Not UPF | `Category inference: {category}` | 413 | No ingredients listed; category suggests unprocessed product (see below). |
+| Not UPF | `No OFF classification, no MUP present` | 2,008 | Has ingredients but no OFF match and no MUP markers found. |
+| Not confirmed UPF | `No ingredients present` | 109 | No ingredients listed and category not in safe inference list. |
+
+### Category inference for products without ingredients
+
+413 products have no ingredients listed and fall into categories where this is expected under [UK food labelling law](https://www.gov.uk/food-labelling-and-packaging/ingredients-list) (single-ingredient or unprocessed products). These are classified as "Not UPF" based on their Waitrose category:
+
+| Category | Count |
+|---|---|
+| Fresh Vegetables | 136 |
+| Fresh Fruit | 104 |
+| Fresh Salad & Herbs | 75 |
+| Milk, Butter & Eggs | 23 |
+| Cheese | 19 |
+| Coffee | 17 |
+| Fresh Chicken & Poultry | 13 |
+| Dried Herbs, Oils & Vinegar | 8 |
+| Tea | 8 |
+| Water | 7 |
+| Fresh Meat | 3 |
+
+Products without ingredients in categories not listed above remain classified as "Not confirmed UPF."
+
+### Excluded categories
+
+Alcohol products (Wine, Beer, Cider, Spirits & Liqueurs, Champagne & Sparkling Wine, Alcohol Free and Low Alcohol Drinks) are excluded from the dataset. NOVA was developed for food and non-alcoholic beverages, and most UPF studies exclude alcohol.
 
 ### Limitations
 
-- MUP substring matching may produce false positives where marker terms appear within longer ingredient names. 
-- MUP prefix matches are approximate. These account for only 4 of 109 MUP entries.
+- MUP substring matching may produce false positives where marker terms appear within longer ingredient names.
+- E-number prefix ranges are approximate (4 of 109 MUP entries).
 - MUP markers are sourced from [Neumann et al. (2023)](https://pmc.ncbi.nlm.nih.gov/articles/PMC10755427/).
