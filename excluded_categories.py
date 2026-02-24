@@ -24,4 +24,10 @@ EXCLUDED_CATEGORY_IDS = {
     "302008",  # Sensitive Bladder & Incontinence
     "302430",  # Toilet Rolls
     "301999",  # Toiletries, Health & Beauty
+    '300469',  # Beer
+    '300470',  # Cider
+    '300471',  # Wine
+    '300472',  # Champagne & Sparkling Wine
+    '300473',  # Spirits & Liqueurs
+    '429581',  # Alcohol Free and Low Alcohol Drinks
 }
