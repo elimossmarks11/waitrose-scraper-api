@@ -115,7 +115,7 @@ def enrich_open_food_facts(only_new: bool):
                     continue
 
                 finally:
-                    time.sleep(2)
+                    time.sleep(0.5)
 
                 if resp.status_code == 200:
                     off_data = resp.json().get('product', {})
@@ -134,12 +134,17 @@ def enrich_open_food_facts(only_new: bool):
                     nova_source = 'No ingredients present'
 
                 else:
-                    for ing in ingredients.split(','):
-                        ing = normalize(ing).strip()
-                        if ing in exact_terms or ing.startswith(prefix_terms):
-                            nova_group = 4
-                            nova_source = f'MUP Present: {ing}'
-                            break
+                    normalised = normalize(ingredients)
+                    matched_mups = [term for term in exact_terms if term in normalised]
+                    
+                    for term in prefix_terms:
+                        for word in normalised.split():
+                            if word.startswith(term):
+                                matched_mups.append(word)
+                            
+                    if matched_mups:
+                        nova_group = 4
+                        nova_source = f'MUP Present: {", ".join(matched_mups)}'
 
             if nova_group is None:
                 nova_group = 'Confirmed not UPF'
@@ -148,6 +153,8 @@ def enrich_open_food_facts(only_new: bool):
             product['nova_group'] = nova_group
             product['nova_source'] = nova_source
             product['barcode_used'] = barcode_used
+
+            click.echo(f'{off_enriched_count}: {product["name"]}: {nova_source}')
             out.write(json.dumps(product) + '\n')
             off_enriched_count += 1
 
