@@ -16,14 +16,11 @@ dependencies:
   # Data manipulation (Both)
   - numpy
   - pandas
-  - sqlite3
   
   # API development (Part B: API)
   - fastapi
   - pydantic
   - uvicorn
-  - httpx
-  - sqlmodel
   
   # Testing (Both)
   - pytest
