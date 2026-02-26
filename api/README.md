@@ -44,5 +44,5 @@ Alcohol products (Wine, Beer, Cider, Spirits & Liqueurs, Champagne & Sparkling W
 ### Limitations
 
 - MUP substring matching may produce false positives where marker terms appear within longer ingredient names.
-- E-number prefix ranges are approximate (4 of 109 MUP entries).
+- E-number prefix ranges capture all E-numbers from e620-e640. E numbers (4 of 109 MUP entries).
 - MUP markers are sourced from [Neumann et al. (2023)](https://pmc.ncbi.nlm.nih.gov/articles/PMC10755427/).
