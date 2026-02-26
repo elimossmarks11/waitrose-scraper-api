@@ -285,8 +285,6 @@ def build_db(db_path: str):
         click.echo(f'  {nova_key:>30s} : {nova_counts[nova_key]}')
     click.echo(f'\nDatabase written to {db_path}')
 
-cli.add_command(main_cli.commands['serve'], name='serve')
-
 if __name__ == '__main__':
     sys.path.insert(0, 'api')
     from main import cli as main_cli
