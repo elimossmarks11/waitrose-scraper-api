@@ -372,7 +372,7 @@ def serve(host: str | None, port: int | None, reload: bool):
     """Start the FastAPI server. Detects Nuvolos automatically."""
     on_nuvolos = _is_running_on_nuvolos()
     host = host or ('0.0.0.0' if on_nuvolos else '127.0.0.1')
-    port = port or (8080 if on_nuvolos else 8000)
+    port = port or 8000
     click.echo(f'Starting server at http://{host}:{port} ({"Nuvolos" if on_nuvolos else "local"})')
     uvicorn.run('main:app', host=host, port=port, reload=reload)
 
