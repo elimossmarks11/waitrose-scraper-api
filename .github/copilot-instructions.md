@@ -105,11 +105,57 @@ scrapy crawl waitrose
 
 ## API Development (Part B - Future)
 
-When implementing the API:
-- Use Pydantic models for request/response validation
-- Reference enriched product data from `data/processed/` (to be created)
-- FastAPI will run on `localhost:8000` with auto-generated docs at `/docs`
-- Use `uvicorn` to run: `uvicorn api.main:app --reload`
+## API Architecture (Part B)
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| [api/main.py](../api/main.py) | FastAPI app, all endpoints, helpers, CLI serve command |
+| [api/models.py](../api/models.py) | Pydantic models: WaitroseProduct, PaginatedResponse, FlagRequest/Response, NearestNonUPFResponse |
+| [run_pipeline.py](../run_pipeline.py) | CLI: enrich-open-food-facts, build-db, serve |
+| [excluded_categories.py](../excluded_categories.py) | Category IDs filtered out (household items, alcohol) |
+| [data/enriched/MUP.xlsx](../data/enriched/MUP.xlsx) | Markers of ultra-processing lookup table (Neumann et al. 2023) |
+
+### Enrichment Pipeline
+
+The `enrich-open-food-facts` command classifies each product through a fallback chain:
+
+1. Query OpenFoodFacts API by barcode (0.5s rate limit, try/except for connection errors)
+2. If no OFF match: substring-match ingredients against MUP markers (exact and prefix)
+3. If no ingredients: infer from category (fresh fruit, vegetables, etc. are "Not UPF")
+4. Default: products with ingredients but no markers are "Not UPF"
+
+All classifications are stored as `nova_group` and `nova_source` in the enriched JSONL.
+
+### Database
+
+`build-db` reads the enriched JSONL and creates a flat SQLite table. Product IDs are extracted from Waitrose URLs (e.g. `.../489078-779911-779912` becomes `489078`). The API queries this database per request rather than loading into memory.
+
+### Endpoints
+
+- `GET /products` - Browse and filter with pagination, category filtering, price range, field masking
+- `GET /products/{id}` - Single product by Waitrose ID
+- `GET /products/{id}/nearest_non_upf` - Nearest non-UPF alternative (category narrowing → name similarity → Jaccard ingredient validation)
+- `POST /products/{id}/flag` - Flag product for researcher review
+- `GET /categories` - Distinct category values with counts
+- `GET /stats` - Dataset summary (UPF proportion, NOVA breakdown, average prices)
+
+### Development Patterns
+
+**Database queries** - Always use parameterised queries (`?` placeholders):
+
+```python
+row = con.execute("SELECT * FROM products WHERE id = ?", (product_id,)).fetchone()
+```
+
+**Pydantic models** - All response models use `Field(description=...)`. New models go in `models.py`.
+
+**Nuvolos detection** - `_is_running_on_nuvolos()` checks `HOSTNAME` env var. Affects `root_path` and default host/port.
+
+**Field masking** - `apply_fields()` filters response dicts to requested fields. Returns 422 for invalid field names.
+
+**Category matching** - Categories stored as `id:name` strings. `category_name()` extracts the name portion for fuzzy substring matching.
 
 ## Code Standards for This Project
 
