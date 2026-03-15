@@ -5,7 +5,7 @@
 
 **Note:** This is a student repository for DS205 Problem Set 1. See the [assignment page](https://lse-dsi.github.io/DS205/2025-2026/winter-term/assessments/problem-set-1.html) for full instructions.
 
-**AUTHOR:** [YOUR NAME](https://github.com/<your-github-username>)
+**AUTHOR:** [Yuki Kimura](https://github.com/grayusan)
 
 ## Project Structure
 
