@@ -21,8 +21,13 @@ dependencies:
   - fastapi
   - pydantic
   - uvicorn
-  - httpx
   
   # Testing (Both)
   - pytest
   - tqdm
+
+  # Pipeline orchestration (Part B: Data Enrichment and API)
+  - click
+
+  # Excel Loading (Part B)
+  - openpyxl
